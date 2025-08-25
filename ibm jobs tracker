@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Jobs Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to bottom right, #1a202c, #4a0e4e); /* Dark gradient background */
+            min-height: 100vh;
+            color: white;
+            padding-top: 65px; /* Offset for fixed header */
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 2rem;
+            background-color: #8430ce; /* A nice purple for the header */
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .logo h1 {
+            margin: 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+        
+        .nav-links {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 0;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #f0e68c; /* Highlight color */
+            transition: width 0.3s ease;
+        }
+        
+        .nav-links a.active::after {
+            width: 100%;
+        }
+
+        .nav-links a:hover {
+            color: #f0e68c;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .auth-buttons button {
+            border: 1px solid white;
+            background-color: transparent;
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .auth-buttons button:last-child {
+            background-color: white;
+            color: #8430ce;
+        }
+
+        .auth-buttons button:hover {
+            background-color: #fff;
+            color: #8430ce;
+        }
+        
+        .auth-buttons button:last-child:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 4rem 2rem;
+            background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ62TGOEpGme2H8XfGNDwTcktJ1k0O-QiJ0Vw&s');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: calc(100vh - 65px);
+        }
+        
+        .content-box {
+            max-width: 800px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            backdrop-filter: blur(5px);
+        }
+        
+        .headline {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin: 0 0 1rem 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            line-height: 1.2;
+        }
+        
+        .sub-headline {
+            font-size: 1.25rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .explore-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: #8430ce;
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.75rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .explore-button:hover {
+            background-color: #9d67ab;
+        }
+
+        .button-icon {
+            filter: invert(100%);
+            height: 24px;
+        }
+
+        /* Sections (Dashboard, Companies, About) */
+        .page-section {
+            display: none;
+            padding: 4rem 2rem;
+            min-height: calc(100vh - 65px);
+            text-align: center;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
+        
+        .page-section.active {
+            display: flex;
+        }
+        
+        .page-section h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .page-section p {
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #1a202c;
+            padding: 2.5rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            max-width: 450px;
+            width: 90%;
+            position: relative;
+        }
+        
+        .modal-content h2 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .modal-content form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .modal-content label {
+            font-size: 1rem;
+            margin-bottom: -0.5rem;
+            font-weight: 600;
+        }
+        
+        .modal-content input {
+            padding: 0.75rem;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background-color: #2d3748;
+            color: #fff;
+        }
+
+        .modal-content .cta-button {
+            background-color: #8430ce;
+            color: white;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .modal-content .cta-button:hover {
+            background-color: #9d67ab;
+        }
+        
+        .close-button {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: #fff;
+            text-decoration: none;
+        }
+        
+        .modal-footer {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9em;
+        }
+        
+        .modal-footer a {
+            color: #8430ce;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .dashboard-content {
+            background-color: #1a202c; /* Dark background for dashboard content */
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .dashboard-content h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: #fff;
+        }
+        
+        .job-card {
+            background-color: #2d3748;
+            color: white;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border-top: 4px solid;
+        }
+
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .job-card-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .job-card p {
+            color: #ccc;
+        }
+
+        .job-card a {
+            display: block;
+            margin-top: 1rem;
+            text-align: center;
+            background-color: #8430ce;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .job-card a:hover {
+            background-color: #9d67ab;
+        }
+
+        .resource-links {
+            background-color: #2d3748;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+        }
+        
+        .resource-links a {
+            background-color: #4a5568;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .resource-links a:hover {
+            background-color: #6a778e;
+        }
+
+        footer {
+            background-color: #8430ce;
+            color: #fff;
+            text-align: center;
+            padding: 15px 10px;
+        }
+        
+        .social-links {
+            margin-top: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .social-links a {
+            color: #fff;
+            margin: 0 10px;
+            transition: color 0.2s ease;
+        }
+        
+        .social-links a:hover {
+            color: #8430ce;
+        }
+        
+        .job-tracker-container, .about-content {
+            background-color: #1a202c;
+            backdrop-filter: blur(5px);
+            border: 1px solid #4c1d95;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-blue-purple {
+            background-image: linear-gradient(to right, #60a5fa, #c084fc);
+        }
+        .gradient-green-teal {
+            background-image: linear-gradient(to right, #86efac, #5eead4);
+        }
+        .gradient-orange-red {
+            background-image: linear-gradient(to right, #f97316, #ef4444);
+        }
+        .animate-spin-fast {
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <h1>Quantum Jobs Tracker⚛</h1>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#hero" class="active">Home</a></li>
+            <li><a href="#dashboard">Dashboard</a></li>
+            <li><a href="#job-tracker">Job Tracker</a></li>
+            <li><a href="#about">About</a></li>
+        </ul>
+        <div class="auth-buttons">
+            <button id="loginBtn">Login</button>
+            <button id="signupBtn">Sign Up</button>
+        </div>
+    </header>
+
+    <main>
+        <section id="hero" class="hero-section page-section active">
+            <div class="content-box">
+                <h2 class="headline">Quantum Computing a Revolutionary Technology</h2>
+                <p class="sub-headline">IBM Quantum Job Tracker is a tool that monitors and manages submitted quantum computing jobs at IBM Quantum platform.</p>
+                <button class="explore-button">
+                    <img src="https://placehold.co/24x24/FFFFFF/000000?text=✨" alt="sparkle icon" class="button-icon">
+                    Explore Features
+                </button>
+            </div>
+        </section>
+
+        <section id="dashboard" class="page-section">
+            <div class="dashboard-content">
+                <h2 class="headline">Recent Quantum Computing Opportunities</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="job-card p-6 rounded-lg shadow-md border-blue-500">
+                        <h3 class="job-card-title text-blue-400">Quantum Research Scientist</h3>
+                        <p class="mb-1"><strong>Company:</strong> IBM Quantum</p>
+                        <p class="mb-1"><strong>Location:</strong> Yorktown Heights, NY, USA (On-site)</p>
+                        <p class="mb-3"><strong>Posted:</strong> August 10, 2025</p>
+                        <p class="text-sm">Conduct groundbreaking research into new superconducting microwave devices and develop novel operational methods in quantum computing. Focus on error correction and system advancement.</p>
+                        <a href="https://www.ibm.com/careers/search?query=quantum%20research%20scientist" target="_blank" class="bg-blue-600 hover:bg-blue-700">View Details</a>
+                    </div>
+                    <div class="job-card p-6 rounded-lg shadow-md border-green-500">
+                        <h3 class="job-card-title text-green-400">Semiconductor Fabrication Scientist</h3>
+                        <p class="mb-1"><strong>Company:</strong> Quantinuum</p>
+                        <p class="mb-1"><strong>Location:</strong> Minnesota, USA (On-site)</p>
+                        <p class="mb-3"><strong>Posted:</strong> August 11, 2025</p>
+                        <p class="text-sm">Focus on photonic qubits and trapped ion technologies. Contribute to the fabrication and characterization of advanced quantum devices.</p>
+                        <a href="https://www.quantumjobs.us/company/quantinuum" target="_blank" class="bg-green-600 hover:bg-green-700">View Details</a>
+                    </div>
+                    <div class="job-card p-6 rounded-lg shadow-md border-yellow-500">
+                        <h3 class="job-card-title text-yellow-400">Quantum Error Correction Research Scientist</h3>
+                        <p class="mb-1"><strong>Company:</strong> Google Quantum AI</p>
+                        <p class="mb-1"><strong>Location:</strong> Mountain View, CA, USA</p>
+                        <p class="mb-3"><strong>Posted:</strong> August 9, 2025</p>
+                        <p class="text-sm">Develop and implement novel quantum error correction schemes, focusing on surface codes and fault-tolerant computing.</p>
+                        <a href="https://quantumai.google/" target="_blank" class="bg-yellow-600 hover:bg-yellow-700">View Details</a>
+                    </div>
+                    <div class="job-card p-6 rounded-lg shadow-md border-purple-500">
+                        <h3 class="job-card-title text-purple-400">Quantum Solutions - Pharma</h3>
+                        <p class="mb-1"><strong>Company:</strong> PsiQuantum</p>
+                        <p class="mb-1"><strong>Location:</strong> Palo Alto, CA, USA (Remote)</p>
+                        <p class="mb-3"><strong>Posted:</strong> August 5, 2025</p>
+                        <p class="text-sm">Apply quantum algorithms to pharmaceutical industry challenges, focusing on photonic qubits and variational quantum eigensolvers (VQE).</p>
+                        <a href="https://www.quantumjobs.us/company/psiquantum" target="_blank" class="bg-purple-600 hover:bg-purple-700">View Details</a>
+                    </div>
+                    <div class="job-card p-6 rounded-lg shadow-md border-red-500">
+                        <h3 class="job-card-title text-red-400">Quantum Firmware Developer - Entry</h3>
+                        <p class="mb-1"><strong>Company:</strong> IBM Quantum</p>
+                        <p class="mb-1"><strong>Location:</strong> Minnesota, USA (On-site)</p>
+                        <p class="mb-3"><strong>Posted:</strong> August 8, 2025</p>
+                        <p class="text-sm">Develop and optimize firmware for quantum computing hardware, focusing on control systems and low-level programming for quantum processors.</p>
+                        <a href="https://www.ibm.com/careers/search?query=quantum%20firmware%20developer" target="_blank" class="bg-red-600 hover:bg-red-700">View Details</a>
+                    </div>
+                    <div class="job-card p-6 rounded-lg shadow-md border-indigo-500">
+                        <h3 class="job-card-title text-indigo-400">Marketing Manager, Quantum</h3>
+                        <p class="mb-1"><strong>Company:</strong> NVIDIA</p>
+                        <p class="mb-1"><strong>Location:</strong> California, USA (Remote)</p>
+                        <p class="mb-3"><strong>Posted:</strong> August 9, 2025</p>
+                        <p class="text-sm">Lead marketing strategies for NVIDIA's quantum computing initiatives, focusing on quantum engineer and control systems. Requires Qiskit familiarity.</p>
+                        <a href="https://www.nvidia.com/en-gb/about-nvidia/careers/" target="_blank" class="bg-indigo-600 hover:bg-indigo-700">View Details</a>
+                    </div>
+                </div>
+                <div class="resource-links">
+                    <p class="text-gray-300 mb-4 text-center">Want to dive deeper into quantum computing and find more opportunities? Explore these resources:</p>
+                    <div class="flex flex-wrap justify-center gap-4">
+                        <a href="https://www.ibm.com/in-en/careers/research" target="_blank">IBM Careers (Research)</a>
+                        <a href="https://www.quantumjobs.us/" target="_blank">Quantum Jobs USA</a>
+                        <a href="https://quantumconsortium.org/quantum-jobs/" target="_blank">QED-C Quantum Jobs</a>
+                        <a href="https://www.ibm.com/think/topics/quantum-computing" target="_blank">What is Quantum Computing? (IBM)</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="job-tracker" class="page-section">
+            <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl shadow-2xl p-8 md:p-12 w-full max-w-2xl border border-indigo-700 job-tracker-container">
+                <h1 class="text-4xl font-bold text-center mb-8 text-gradient gradient-blue-purple">
+                    IBM Quantum Job Tracker ⚛
+                </h1>
+        
+                <p class="text-center text-gray-300 mb-8">
+                    Enter a simulated IBM Quantum Job ID (e.g., <code class="bg-gray-700 px-1 py-0.5 rounded text-sm">job123</code>, <code class="bg-gray-700 px-1 py-0.5 rounded text-sm">job456</code>, or <code class="bg-gray-700 px-1 py-0.5 rounded text-sm">job789</code>) to see its details.
+                    <br>
+                    Note: A live public API feed isn't available for this demo.
+                </p>
+        
+                <div class="flex flex-col sm:flex-row gap-4 mb-8">
+                    <input
+                        type="text"
+                        id="jobIdInput"
+                        class="flex-grow p-3 rounded-xl bg-gray-800 bg-opacity-50 border border-indigo-600 focus:outline-none focus:ring-2 focus:ring-purple-400 placeholder-gray-400 text-white shadow-inner"
+                        placeholder="Enter Job ID"
+                    />
+                    <button
+                        id="fetchButton"
+                        class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75 flex items-center justify-center"
+                    >
+                        <span id="buttonText">Fetch Job Details</span>
+                        <svg id="loadingSpinner" class="animate-spin-fast -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </div>
+        
+                <div id="errorMessage" class="hidden bg-red-800 bg-opacity-70 border border-red-600 text-red-100 p-4 rounded-xl mb-6 shadow-md">
+                    <p class="font-medium">Error:</p>
+                    <p id="errorText"></p>
+                </div>
+        
+                <div id="jobDetailsContainer" class="hidden bg-gray-800 bg-opacity-50 rounded-2xl p-6 shadow-xl border border-gray-700">
+                    <h2 class="text-2xl font-bold mb-4 text-gradient gradient-green-teal">
+                        Job Details: <span id="jobIdDisplay" class="text-white"></span>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-lg">
+                        <p><strong class="text-blue-300">Status:</strong> <span id="jobStatus" class="font-semibold"></span></p>
+                        <p><strong class="text-blue-300">Backend:</strong> <span id="jobBackend"></span></p>
+                        <p><strong class="text-blue-300">Shots:</strong> <span id="jobShots"></span></p>
+                        <p><strong class="text-blue-300">Creation Date:</strong> <span id="jobCreationDate"></span></p>
+                        <p id="jobStartTimeContainer" class="hidden"><strong class="text-blue-300">Start Time:</strong> <span id="jobStartTime"></span></p>
+                        <p id="jobCompletionDateContainer" class="hidden"><strong class="text-blue-300">Completion Date:</strong> <span id="jobCompletionDate"></span></p>
+                        <p id="jobRuntimeContainer" class="hidden"><strong class="text-blue-300">Runtime:</strong> <span id="jobRuntime"></span></p>
+                        <p><strong class="text-blue-300">Program:</strong> <span id="jobProgram"></span></p>
+                        <p><strong class="text-blue-300">User ID:</strong> <span id="jobUser"></span></p>
+                        <p id="jobQueuePositionContainer" class="hidden"><strong class="text-blue-300">Queue Position:</strong> <span id="jobQueuePosition"></span></p>
+                        <p id="jobErrorMessageContainer" class="hidden md:col-span-2"><strong class="text-blue-300">Error:</strong> <span id="jobErrorMessage" class="text-red-400"></span></p>
+                        <p id="jobTagsContainer" class="hidden md:col-span-2">
+                          <strong class="text-blue-300">Tags:</strong>
+                          <span id="jobTags" class="inline-block"></span>
+                        </p>
+                        <div id="jobResultsContainer" class="hidden md:col-span-2">
+                            <strong class="text-blue-300">Results:</strong>
+                            <pre class="bg-gray-900 bg-opacity-70 p-4 rounded-lg mt-2 overflow-auto text-sm text-gray-200" id="jobResults"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    <section id="about" class="page-section">
+    <div class="about-content">
+        <h1 class="text-4xl font-bold text-center mb-8 text-gradient gradient-blue-purple">
+            About IBM Quantum Job Tracker ⚛
+        </h1>
+        <p class="text-gray-300 mb-10">
+            Discover the mission, vision, and the brilliant minds behind our intuitive quantum job tracking platform.
+        </p>
+        <div class="flex flex-col md:flex-row md:space-x-8">
+            <div class="bg-gray-800 bg-opacity-50 rounded-2xl p-6 shadow-xl border border-gray-700 mb-8 w-full">
+                <h2 class="text-2xl font-bold mb-4 text-gradient gradient-green-teal">
+                    Our Mission 🚀
+                </h2>
+                <p class="text-gray-200 text-lg leading-relaxed">
+                    At IBM Quantum Job Tracker, our mission is to simplify the complex world of quantum computing. We strive to provide researchers, developers, and enthusiasts with a transparent, real-time overview of their quantum experiments. By making job tracking intuitive and accessible, we aim to accelerate innovation and collaboration in the quantum realm, fostering a community where quantum breakthroughs are within everyone's reach.
+                </p>
+            </div>
+            <div class="bg-gray-800 bg-opacity-50 rounded-2xl p-6 shadow-xl border border-gray-700 mb-8 w-full">
+                <h2 class="text-2xl font-bold mb-4 text-gradient gradient-orange-red">
+                    Our Story 📖
+                </h2>
+                <p class="text-gray-200 text-lg leading-relaxed">
+                    The journey of the IBM Quantum Job Tracker began with a shared vision among a small team of passionate individuals. We recognized the growing need for a reliable and user-friendly platform to monitor quantum jobs, bridging the gap between cutting-edge quantum hardware and its users. From initial prototypes to the robust system you see today, our development has been driven by a commitment to excellence and a deep belief in the transformative power of quantum technology. We're continuously evolving, driven by user feedback and the exciting advancements in quantum science.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+    </main>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" role="button" aria-label="Close Login Modal">&times;</span>
+            <h2>Login to Quantum Jobs</h2>
+            <form>
+                <label for="login-email">Email:</label>
+                <input type="text" id="login-email" name="email" placeholder="Enter your email" required>
+                <label for="login-password">Password:</label>
+                <input type="password" id="login-password" name="password" placeholder="Enter your password" required>
+                <button type="submit" class="cta-button">Login</button>
+                <p class="modal-footer">Don't have an account? <a href="#" id="switchToSignup">Sign Up</a></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" role="button" aria-label="Close Sign Up Modal">&times;</span>
+            <h2>Register for Quantum Jobs</h2>
+            <form>
+                <label for="signup-name">Full Name:</label>
+                <input type="text" id="signup-name" name="name" placeholder="Your Name" required>
+                <label for="signup-email">Email:</label>
+                <input type="email" id="signup-email" name="email" placeholder="Your Email Address" required>
+                <label for="signup-password">Password:</label>
+                <input type="password" id="signup-password" name="password" placeholder="Create a password" required>
+                <button type="submit" class="cta-button">Register</button>
+                <p class="modal-footer">Already have an account? <a href="#" id="switchToLogin">Login</a></p>
+            </form>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2025 Team Hacktrix. All rights reserved.</p>
+        <div class="social-links">
+            <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+            <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+            <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+        </div>
+    </footer>
+
+    <script>
+       document.addEventListener('DOMContentLoaded', () => {
+    // Navigation and Section Switching Logic
+    const navLinks = document.querySelectorAll('.nav-links a');
+    const sections = document.querySelectorAll('.page-section');
+    const exploreBtn = document.querySelector('.explore-button');
+    const mainElement = document.querySelector('main');
+
+    function showSection(id) {
+        sections.forEach(section => {
+            section.classList.remove('active');
+            // Reset styling for all sections
+            section.style.paddingTop = ''; 
+            mainElement.style.padding = '';
+        });
+        
+        const targetSection = document.getElementById(id);
+        targetSection.classList.add('active');
+
+        // Adjust padding for sections other than the hero
+        if (id !== 'hero') {
+            mainElement.style.padding = '2rem';
+            targetSection.style.paddingTop = '6rem';
+        }
+
+        navLinks.forEach(link => {
+            // FIX 1: Corrected string interpolation. Changed `#{id}` to `${id}`
+            if (link.getAttribute('href') === `#${id}`) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href').substring(1);
+            showSection(targetId);
+        });
+    });
+
+    // Set initial active section
+    showSection('hero');
+
+    exploreBtn.addEventListener('click', () => {
+        showSection('dashboard');
+    });
+
+    // Login/Signup Modal Logic
+    const loginBtn = document.getElementById('loginBtn');
+    const signupBtn = document.getElementById('signupBtn');
+    const loginModal = document.getElementById('loginModal');
+    const signupModal = document.getElementById('signupModal');
+    const closeButtons = document.querySelectorAll('.modal .close-button');
+    const switchToSignupLink = document.getElementById('switchToSignup');
+    const switchToLoginLink = document.getElementById('switchToLogin');
+
+    function openModal(modal) {
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('role', 'dialog');
+        setTimeout(() => modal.focus(), 0);
+    }
+
+    function closeModal(modal) {
+        modal.style.display = 'none';
+        modal.removeAttribute('aria-modal');
+        modal.removeAttribute('role');
+    }
+
+    loginBtn.addEventListener('click', () => openModal(loginModal));
+    signupBtn.addEventListener('click', () => openModal(signupModal));
+
+    closeButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            closeModal(e.target.closest('.modal'));
+        });
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target === loginModal) {
+            closeModal(loginModal);
+        }
+        if (event.target === signupModal) {
+            closeModal(signupModal);
+        }
+    });
+
+    switchToSignupLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeModal(loginModal);
+        openModal(signupModal);
+    });
+
+    switchToLoginLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeModal(signupModal);
+        openModal(loginModal);
+    });
+
+    // Job Tracker Specific Logic
+    const jobIdInput = document.getElementById('jobIdInput');
+    const fetchButton = document.getElementById('fetchButton');
+    const buttonText = document.getElementById('buttonText');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const errorMessage = document.getElementById('errorMessage');
+    const errorText = document.getElementById('errorText');
+    const jobDetailsContainer = document.getElementById('jobDetailsContainer');
+    const jobIdDisplay = document.getElementById('jobIdDisplay');
+    const jobStatus = document.getElementById('jobStatus');
+    const jobBackend = document.getElementById('jobBackend');
+    const jobShots = document.getElementById('jobShots');
+    const jobCreationDate = document.getElementById('jobCreationDate');
+    const jobStartTimeContainer = document.getElementById('jobStartTimeContainer');
+    const jobStartTime = document.getElementById('jobStartTime');
+    const jobCompletionDateContainer = document.getElementById('jobCompletionDateContainer');
+    const jobCompletionDate = document.getElementById('jobCompletionDate');
+    const jobRuntimeContainer = document.getElementById('jobRuntimeContainer');
+    const jobRuntime = document.getElementById('jobRuntime');
+    const jobProgram = document.getElementById('jobProgram');
+    const jobUser = document.getElementById('jobUser');
+    const jobQueuePositionContainer = document.getElementById('jobQueuePositionContainer');
+    const jobQueuePosition = document.getElementById('jobQueuePosition');
+    const jobErrorMessageContainer = document.getElementById('jobErrorMessageContainer');
+    const jobErrorMessage = document.getElementById('jobErrorMessage');
+    const jobTagsContainer = document.getElementById('jobTagsContainer');
+    const jobTags = document.getElementById('jobTags');
+    const jobResultsContainer = document.getElementById('jobResultsContainer');
+    const jobResults = document.getElementById('jobResults');
+
+    // FIX 2: Added a dummy data object to simulate job details.
+    const dummyJobData = {
+        'job123': {
+            id: 'job123',
+            status: 'COMPLETED',
+            backend: 'ibm_washington',
+            shots: 1024,
+            creationDate: new Date('2025-08-12T10:00:00Z'),
+            startTime: new Date('2025-08-12T10:01:30Z'),
+            completionDate: new Date('2025-08-12T10:05:45Z'),
+            runtime: '4m 15s',
+            program: 'quantum_teleportation',
+            user: 'user_alpha',
+            queuePosition: null,
+            tags: ['qiskit', 'demo'],
+            results: JSON.stringify({
+                counts: {'000': 500, '111': 524},
+                measurement_data: '...',
+            })
+        },
+        'job456': {
+            id: 'job456',
+            status: 'RUNNING',
+            backend: 'ibm_hanoi',
+            shots: 2048,
+            creationDate: new Date('2025-08-14T09:00:00Z'),
+            startTime: new Date('2025-08-14T09:05:00Z'),
+            completionDate: null,
+            runtime: null,
+            program: 'entanglement_circuit',
+            user: 'user_beta',
+            queuePosition: null,
+            tags: ['research', 'entanglement'],
+            results: null
+        },
+        'job789': {
+            id: 'job789',
+            status: 'QUEUED',
+            backend: 'ibm_lagos',
+            shots: 4096,
+            creationDate: new Date('2025-08-14T09:40:00Z'),
+            startTime: null,
+            completionDate: null,
+            runtime: null,
+            program: 'vqe_optimization',
+            user: 'user_gamma',
+            queuePosition: 2,
+            tags: ['optimization', 'vqe'],
+            results: null
+        },
+        'job-failed': {
+            id: 'job-failed',
+            status: 'FAILED',
+            backend: 'ibm_oslo',
+            shots: 1024,
+            creationDate: new Date('2025-08-13T15:00:00Z'),
+            startTime: new Date('2025-08-13T15:00:10Z'),
+            completionDate: new Date('2025-08-13T15:00:15Z'),
+            runtime: '5s',
+            program: 'error_prone_circuit',
+            user: 'user_delta',
+            queuePosition: null,
+            tags: ['debug'],
+            errorMessage: 'Job failed due to a hardware connectivity error. Please resubmit the job.',
+            results: null
+        }
+    };
+
+    const quantumServicesData = {
+    'svc-ibm': {
+        id: 'svc-ibm',
+        name: 'IBM Quantum Platform',
+        status: 'Available',
+        description: 'Cloud access to multiple superconducting quantum processors via Qiskit.',
+        provider: 'IBM',
+        tech: 'Superconducting',
+        url: 'https://quantum.cloud.ibm.com/',
+    },
+    'svc-aws-braket': {
+        id: 'svc-aws-braket',
+        name: 'Amazon Braket',
+        status: 'Available',
+        description: 'Multi-vendor QCaaS with access to IonQ, Rigetti, IQM, QuEra and simulators (SV1, TN1, DM1).',
+        provider: 'AWS',
+        tech: 'Multi-vendor (Gate, Ion-trap, Neutral-atom, Simulators)',
+        url: 'https://aws.amazon.com/braket/',
+    },
+    'svc-microsoft': {
+        id: 'svc-microsoft',
+        name: 'Azure Quantum',
+        status: 'Available',
+        description: 'Cloud access to hardware via IonQ, Quantinuum, Atom Computing, with Q# SDK.',
+        provider: 'Microsoft',
+        tech: 'Trapped-ion / Others',
+        url: 'https://azure.microsoft.com/en-us/services/quantum/',
+    },
+    'svc-google': {
+        id: 'svc-google',
+        name: 'Google Quantum AI',
+        status: 'Available',
+        description: 'Access to superconducting quantum processors via Cirq and experiments in fault-tolerant schemes.',
+        provider: 'Google',
+        tech: 'Superconducting',
+        url: 'https://quantumai.google/',
+    },
+    // FIX 3: Corrected the malformed D-Wave entry.
+    'svc-dwave': {
+        id: 'svc-dwave',
+        name: 'D-Wave Leap',
+        status: 'Available',
+        description: 'Quantum annealing access via cloud for optimization problems.',
+        provider: 'D-Wave',
+        tech: 'Quantum Annealing',
+        url: 'https://www.dwavesys.com/take-leap',
+    },
+    'svc-xanadu': {
+        id: 'svc-xanadu',
+        name: 'Xanadu Cloud',
+        status: 'Available',
+        description: 'Photonic quantum computing via PennyLane, StrawberryFields frameworks.',
+        provider: 'Xanadu',
+        tech: 'Photonic',
+        url: 'https://cloud.xanadu.ai/',
+    },
+    // You can add more entries as needed...
+};
+
+// Example of rendering this data into the dashboard as service cards
+function renderQuantumServices() {
+    const container = document.querySelector('.grid'); // adjust to your UI container
+    container.innerHTML = ''; // clear existing content
+    Object.values(quantumServicesData).forEach(svc => {
+        const card = document.createElement('div');
+        card.className = 'job-card p-6 rounded-lg shadow-md border-indigo-500';
+        card.innerHTML = `
+            <h3 class="job-card-title text-indigo-400">${svc.name}</h3>
+            <p><strong>Provider:</strong> ${svc.provider}</p>
+            <p><strong>Technology:</strong> ${svc.tech}</p>
+            <p class="mb-3"><strong>Status:</strong> ${svc.status}</p>
+            <p class="text-sm">${svc.description}</p>
+            <a href="${svc.url}" target="_blank" class="bg-indigo-600 hover:bg-indigo-700 mt-3 inline-block px-4 py-2 rounded">Learn More</a>
+        `;
+        container.appendChild(card);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', renderQuantumServices);
+
+
+    const fetchJobDetails = async (id) => {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                const data = dummyJobData[id];
+                resolve(data);
+            }, Math.random() * 1500 + 500);
+        });
+    };
+
+    const displayJobDetails = (details) => {
+        jobIdDisplay.textContent = details.id;
+        jobStatus.textContent = details.status;
+        // FIX 4: Added a space after 'font-semibold' to correctly apply the following color classes.
+        jobStatus.className = 'font-semibold ';
+        if (details.status === 'COMPLETED') {
+            jobStatus.classList.add('text-green-400');
+        } else if (details.status === 'RUNNING') {
+            jobStatus.classList.add('text-yellow-400');
+        } else if (details.status === 'QUEUED') {
+            jobStatus.classList.add('text-blue-400');
+        } else if (details.status === 'FAILED') {
+            jobStatus.classList.add('text-red-400');
+        } else {
+            jobStatus.classList.add('text-gray-400');
+        }
+
+        jobBackend.textContent = details.backend;
+        jobShots.textContent = details.shots;
+        jobCreationDate.textContent = new Date(details.creationDate).toLocaleString();
+
+        if (details.startTime) {
+            jobStartTime.textContent = new Date(details.startTime).toLocaleString();
+            jobStartTimeContainer.classList.remove('hidden');
+        } else {
+            jobStartTimeContainer.classList.add('hidden');
+        }
+
+        if (details.completionDate) {
+            jobCompletionDate.textContent = new Date(details.completionDate).toLocaleString();
+            jobCompletionDateContainer.classList.remove('hidden');
+        } else {
+            jobCompletionDateContainer.classList.add('hidden');
+        }
+
+        if (details.runtime) {
+            jobRuntime.textContent = details.runtime;
+            jobRuntimeContainer.classList.remove('hidden');
+        } else {
+            jobRuntimeContainer.classList.add('hidden');
+        }
+
+        jobProgram.textContent = details.program;
+        jobUser.textContent = details.user;
+
+        if (details.queuePosition !== null) {
+            jobQueuePosition.textContent = details.queuePosition;
+            jobQueuePositionContainer.classList.remove('hidden');
+        } else {
+            jobQueuePositionContainer.classList.add('hidden');
+        }
+
+        if (details.errorMessage) {
+            jobErrorMessage.textContent = details.errorMessage;
+            jobErrorMessageContainer.classList.remove('hidden');
+        } else {
+            jobErrorMessageContainer.classList.add('hidden');
+        }
+
+        jobTags.innerHTML = '';
+        if (details.tags && details.tags.length > 0) {
+            details.tags.forEach(tag => {
+                const tagSpan = document.createElement('span');
+                tagSpan.className = 'inline-block bg-purple-700 text-white text-sm px-2 py-1 rounded-full mr-2 mb-1';
+                tagSpan.textContent = tag;
+                jobTags.appendChild(tagSpan);
+            });
+            jobTagsContainer.classList.remove('hidden');
+        } else {
+            jobTagsContainer.classList.add('hidden');
+        }
+
+        if (details.results) {
+            jobResults.textContent = JSON.stringify(JSON.parse(details.results), null, 2);
+            jobResultsContainer.classList.remove('hidden');
+        } else {
+            jobResultsContainer.classList.add('hidden');
+        }
+
+        jobDetailsContainer.classList.remove('hidden');
+    };
+
+    const displayError = (message) => {
+        errorText.textContent = message;
+        errorMessage.classList.remove('hidden');
+    };
+
+    const clearMessages = () => {
+        errorMessage.classList.add('hidden');
+        jobDetailsContainer.classList.add('hidden');
+    };
+
+    const setLoadingState = (isLoading) => {
+        fetchButton.disabled = isLoading;
+        if (isLoading) {
+            buttonText.textContent = 'Fetching...';
+            loadingSpinner.classList.remove('hidden');
+        } else {
+            buttonText.textContent = 'Fetch Job Details';
+            loadingSpinner.classList.add('hidden');
+        }
+    };
+
+    fetchButton.addEventListener('click', async () => {
+        clearMessages();
+        const jobId = jobIdInput.value.trim();
+
+        if (!jobId) {
+            displayError('Please enter a Job ID.');
+            return;
+        }
+
+        setLoadingState(true);
+        try {
+            const details = await fetchJobDetails(jobId);
+            if (details) {
+                displayJobDetails(details);
+            } else {
+                // FIX 5: Corrected string interpolation. Changed `"${jobId}"` to `${jobId}`.
+                displayError(`No job found with ID: "${jobId}". Please try job123, job456, job789 or job-failed for examples.`);
+            }
+        } catch (err) {
+            console.error('Error fetching job details:', err);
+            displayError('Failed to fetch job details. Please try again later.');
+        } finally {
+            setLoadingState(false);
+        }
+    });
+});
+    </script>
+</body>
+</html>
